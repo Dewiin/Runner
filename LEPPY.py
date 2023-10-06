@@ -28,6 +28,15 @@ for scale in range(len(player_walk)) :
     player_walk[scale] = pygame.transform.scale(player_walk[scale], (96,96))
     player_rect = player_walk[scale].get_rect(midbottom = (150, 560))
 
+player_slash_1 = pygame.image.load("swoosh/slash0.png").convert_alpha()
+player_slash_2 = pygame.image.load("swoosh/slash1.png").convert_alpha()
+player_slash_3 = pygame.image.load("swoosh/slash2.png").convert_alpha()
+player_slash_4 = pygame.image.load("swoosh/slash3.png").convert_alpha()
+player_slash = [player_slash_1, player_slash_2, player_slash_3, player_slash_4]
+for slash in range(len(player_slash)) :
+    player_slash[slash] = pygame.transform.scale(player_slash[slash], (96,96))
+    slash_rect = player_slash[slash].get_rect(midbottom = (182, 560))
+
 bg_width = background_surface1.get_width()
 ground_width = ground_surface.get_width()
 
@@ -51,8 +60,14 @@ while run:
         if event.type == pygame.QUIT:
             run = False
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:  
+            if event.key == pygame.K_SPACE and player_rect.bottom >= 560:  
                 player_gravity = -20
+            if event.key == pygame.MOUSEBUTTONUP :
+                print("mouse")
+                #for sl in range(player_slash) :
+                    #screen.blit(player_slash[sl], slash_rect)
+
+        
 
     #----------------------------Background----------------------------#
 
@@ -88,6 +103,7 @@ while run:
     #---------Gravity--------#
     player_gravity += 1
     player_rect.y += player_gravity
+    if player_rect.bottom >= 560 : player_rect.bottom = 560
 
     pygame.display.update()
     
