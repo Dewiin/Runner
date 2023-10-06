@@ -35,7 +35,7 @@ player_slash_4 = pygame.image.load("swoosh/slash3.png").convert_alpha()
 player_slash = [player_slash_1, player_slash_2, player_slash_3, player_slash_4]
 for slash in range(len(player_slash)) :
     player_slash[slash] = pygame.transform.scale(player_slash[slash], (96,96))
-    slash_rect = player_slash[slash].get_rect(midbottom = (182, 560))
+    slash_rect = player_slash[slash].get_rect(topleft = (player_rect.x, player_rect.y))
 
 bg_width = background_surface1.get_width()
 ground_width = ground_surface.get_width()
@@ -55,6 +55,7 @@ player_gravity = 0
 run = True
 while run:
     clock.tick(60)
+    current_time = pygame.time.get_ticks()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -62,10 +63,9 @@ while run:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE and player_rect.bottom >= 560:  
                 player_gravity = -20
-            if event.key == pygame.MOUSEBUTTONUP :
-                print("mouse")
-                #for sl in range(player_slash) :
-                    #screen.blit(player_slash[sl], slash_rect)
+            if event.key == pygame.K_j :
+                for sl in range(len(player_slash)) :
+                    screen.blit(player_slash[sl], slash_rect)
 
         
 
@@ -87,13 +87,13 @@ while run:
 
     #-----------------------------Animation-----------------------------#
 
-    current_time = pygame.time.get_ticks()
     if current_time - last_update >= animation_cooldown:  #calculating ms difference
         frame += 1
         last_update = current_time
         if(frame == 4) : frame = 0  #animation loop
 
     screen.blit(player_walk[frame], player_rect)  #iterating through list of animation images
+    screen.blit(player_slash[frame], slash_rect)
 
     #------------------------------Gameplay------------------------------#
 
