@@ -1,17 +1,20 @@
 import pygame
 import math
 
+def display_score():
+    current_time = pygame.time.get_ticks()
+    score_surface = score_font.render(f'{current_time}', False, "Orange")
+    score_rect = score_surface.get_rect(center = (SCREEN_WIDTH/2, 100))
+    screen.blit(score_surface, score_rect)
+
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 650
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
 pygame.display.set_caption("LEPPY")
 clock = pygame.time.Clock()
-score = "0"
 
 score_font = pygame.font.Font("Fonts/BungeeSpice.ttf", 50)
-score_surface  = score_font.render(score, False, "Orange")
-score_rect = score_surface.get_rect(center = (SCREEN_WIDTH/2, 100))
 
 background_surface1 = pygame.image.load("Forest/Layers/back.png").convert_alpha()
 background_surface2 = pygame.image.load("Forest/Layers/far.png").convert_alpha()
@@ -75,6 +78,16 @@ while run:
     current_time = pygame.time.get_ticks()
     current_slash_time = pygame.time.get_ticks()
 
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+
+        if not game_active:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                snake_rect.left = 1100
+                player_rect.bottom = 560
+                player_rect.x = 150 
+                game_active = True
 
     #----------------------------Background----------------------------#
     if game_active:
@@ -92,7 +105,7 @@ while run:
         ground_scroll -= 5  #ground scrolling magnitude
         if abs(ground_scroll) > ground_width : ground_scroll = 0  #ground loop
 
-        screen.blit(score_surface, score_rect)
+        display_score()
 
         #-----------------------------Animation-----------------------------#
 
@@ -142,11 +155,11 @@ while run:
         if(player_rect.colliderect(snake_rect)):
             game_active = False
 
-        pygame.display.update()
+    else:
+        screen.fill("Yellow")
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-    
+
+    pygame.display.update()
+
 pygame.QUIT()
 
