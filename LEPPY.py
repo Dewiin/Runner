@@ -7,6 +7,11 @@ pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
 pygame.display.set_caption("LEPPY")
 clock = pygame.time.Clock()
+score = "0"
+
+score_font = pygame.font.Font("Fonts/BungeeSpice.ttf", 50)
+score_surface  = score_font.render(score, False, "Orange")
+score_rect = score_surface.get_rect(center = (SCREEN_WIDTH/2, 100))
 
 background_surface1 = pygame.image.load("Forest/Layers/back.png").convert_alpha()
 background_surface2 = pygame.image.load("Forest/Layers/far.png").convert_alpha()
@@ -34,6 +39,16 @@ player_slash_3 = pygame.image.load("swoosh/slash2.png").convert_alpha()
 player_slash_4 = pygame.image.load("swoosh/slash3.png").convert_alpha()
 player_slash = [player_slash_1, player_slash_2, player_slash_3, player_slash_4]
 
+snake_walk_1 = pygame.image.load("Snake_walk/snake0.png").convert_alpha()
+snake_walk_2 = pygame.image.load("Snake_walk/snake1.png").convert_alpha()
+snake_walk_3 = pygame.image.load("Snake_walk/snake2.png").convert_alpha()
+snake_walk_4 = pygame.image.load("Snake_walk/snake3.png").convert_alpha()
+snake_walk = [snake_walk_1, snake_walk_2, snake_walk_3, snake_walk_4]
+for sn in range (len(snake_walk)): 
+    snake_walk[sn] = pygame.transform.scale(snake_walk[sn], (144,144))
+    snake_rect = snake_walk[sn].get_rect(bottomleft = (SCREEN_WIDTH, 540))
+                                         
+
 bg_width = background_surface1.get_width()
 ground_width = ground_surface.get_width()
 
@@ -53,6 +68,8 @@ slash_frame = 0
 player_gravity = 0
 
 run = True
+game_active = True
+
 while run:
     clock.tick(60)
     current_time = pygame.time.get_ticks()
@@ -60,62 +77,76 @@ while run:
 
 
     #----------------------------Background----------------------------#
+    if game_active:
+        for i in range(0,bg_tiles) : 
+            screen.blit(background_surface1, (i * bg_width + bg_scroll, 0))  #layer1 scroll
+            screen.blit(background_surface2, (i * bg_width + bg_scroll, 0))  #layer2 scroll
+            screen.blit(background_surface2, (i * bg_width + bg_scroll, 0))  #layer3 scroll
+            
+        bg_scroll -= 3  #background scrolling magnitude
+        if abs(bg_scroll) > bg_width : bg_scroll = 0  #background loop
 
-    for i in range(0,bg_tiles) : 
-        screen.blit(background_surface1, (i * bg_width + bg_scroll, 0))  #layer1 scroll
-        screen.blit(background_surface2, (i * bg_width + bg_scroll, 0))  #layer2 scroll
-        screen.blit(background_surface2, (i * bg_width + bg_scroll, 0))  #layer3 scroll
-        
-    bg_scroll -= 3  #background scrolling magnitude
-    if abs(bg_scroll) > bg_width : bg_scroll = 0  #background loop
+        for j in range(0,ground_tiles) : 
+            screen.blit(ground_surface, (j * ground_width + ground_scroll, 530))  #ground scroll
 
-    for j in range(0,ground_tiles) : 
-        screen.blit(ground_surface, (j * ground_width + ground_scroll, 530))  #ground scroll
+        ground_scroll -= 5  #ground scrolling magnitude
+        if abs(ground_scroll) > ground_width : ground_scroll = 0  #ground loop
 
-    ground_scroll -= 6  #ground scrolling magnitude
-    if abs(ground_scroll) > ground_width : ground_scroll = 0  #ground loop
+        screen.blit(score_surface, score_rect)
 
-    #-----------------------------Animation-----------------------------#
+        #-----------------------------Animation-----------------------------#
 
-    if current_time - last_update >= animation_cooldown:  #calculating ms difference
-        walk_frame += 1
-        last_update = current_time
-        if(walk_frame == 4) : walk_frame = 0  #animation loop
+        if current_time - last_update >= animation_cooldown:  #calculating ms difference
+            walk_frame += 1
+            last_update = current_time
+            if(walk_frame == 4) : walk_frame = 0  #animation loop
 
-    screen.blit(player_walk[walk_frame], player_rect)  #iterating through list of animation images
-    #screen.blit(player_slash[frame], slash_rect)
+        screen.blit(player_walk[walk_frame], player_rect)  #iterating through list of animation images
+        screen.blit(snake_walk[walk_frame], snake_rect)
+        snake_rect.x -= 7
+        if snake_rect.x < -500 : snake_rect.x = SCREEN_WIDTH
 
-    #------------------------------Gameplay------------------------------#
+        #------------------------------Gameplay------------------------------#
+            
+        keys = pygame.key.get_pressed()
+        if(current_slash_time - last_slash_update >= slash_cooldown):
+            if keys[pygame.K_j]:
+                screen.blit(player_slash[slash_frame], slash_rect)
+                slash_frame += 1
+                if(slash_frame == 4): 
+                    slash_frame = 0
+                    last_slash_update = current_slash_time
+        if keys[pygame.K_SPACE] and player_rect.bottom >= 560:
+            player_gravity = -22
+        if keys[pygame.K_a]:
+            player_rect.x -= 6
+            if player_rect.x < 0: player_rect.x = 0
+        if keys[pygame.K_d]:
+            player_rect.x += 6
+            if player_rect.right > SCREEN_WIDTH: player_rect.right = SCREEN_WIDTH
+
+        for slash in range(len(player_slash)) :
+            player_slash[slash] = pygame.transform.scale(player_slash[slash], (96,96))
+            slash_rect = player_slash[slash].get_rect(topleft = (player_rect.x + 30, player_rect.y))
+                
+                        
+
+        #--------------------------------------------------------------------#
+
+        #---------Gravity--------#
+        player_gravity += 1
+        player_rect.y += player_gravity
+        if player_rect.bottom >= 560 : player_rect.bottom = 560
+
+        #collision
+        if(player_rect.colliderect(snake_rect)):
+            game_active = False
+
+        pygame.display.update()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-        
-    keys = pygame.key.get_pressed()
-    if(current_slash_time - last_slash_update >= slash_cooldown):
-        if keys[pygame.K_j]:
-            screen.blit(player_slash[slash_frame], slash_rect)
-            slash_frame += 1
-            if(slash_frame == 4): 
-                slash_frame = 0
-                last_slash_update = current_slash_time
-    if keys[pygame.K_SPACE] and player_rect.bottom >= 560:
-        player_gravity = -22
-
-    for slash in range(len(player_slash)) :
-        player_slash[slash] = pygame.transform.scale(player_slash[slash], (96,96))
-        slash_rect = player_slash[slash].get_rect(topleft = (player_rect.x + 30, player_rect.y))
-            
-                    
-
-    #--------------------------------------------------------------------#
-
-    #---------Gravity--------#
-    player_gravity += 1
-    player_rect.y += player_gravity
-    if player_rect.bottom >= 560 : player_rect.bottom = 560
-
-    pygame.display.update()
     
 pygame.QUIT()
 
