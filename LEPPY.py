@@ -2,10 +2,32 @@ import pygame
 import math
 
 def display_score():
-    current_time = pygame.time.get_ticks()
+    current_time = int(pygame.time.get_ticks()/500) - int(start_time/500)
     score_surface = score_font.render(f'{current_time}', False, "Orange")
     score_rect = score_surface.get_rect(center = (SCREEN_WIDTH/2, 100))
     screen.blit(score_surface, score_rect)
+    return current_time
+
+def game_over():
+    screen.fill("Black")
+    game_over_surface = pygame.image.load("GameOver.png").convert_alpha()
+    game_over_rect = game_over_surface.get_rect(center = (SCREEN_WIDTH/2, 150))
+    game_score_surface = score_font.render(f"Score: {score}", False, "White")
+    game_score_rect = game_score_surface.get_rect(center = (SCREEN_WIDTH/2, 300))
+    restart_surface = score_font.render("Press enter to restart", False, "White")
+    restart_rect = restart_surface.get_rect(center = (SCREEN_WIDTH/2, 450))
+    
+    screen.blit(game_over_surface, game_over_rect)
+    screen.blit(game_score_surface, game_score_rect)
+    screen.blit(restart_surface, restart_rect)
+
+def game_start():
+    title_surface = title_font.render("LEPPY", False, "Orange")
+    title_rect = title_surface.get_rect(center = (SCREEN_WIDTH/2, 100))
+    for i in range(0, bg_tiles):
+        screen.blit(background_surface1, (i * bg_width,0))
+        screen.blit(background_surface2, (i * bg_width,0))
+    screen.blit(title_surface, title_rect)
 
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 650
@@ -13,8 +35,11 @@ pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
 pygame.display.set_caption("LEPPY")
 clock = pygame.time.Clock()
+start_time = 0
+score = 0
 
 score_font = pygame.font.Font("Fonts/BungeeSpice.ttf", 50)
+title_font = pygame.font.Font("Fonts/BungeeSpice.ttf", 100)
 
 background_surface1 = pygame.image.load("Forest/Layers/back.png").convert_alpha()
 background_surface2 = pygame.image.load("Forest/Layers/far.png").convert_alpha()
@@ -22,6 +47,7 @@ background_surface3 = pygame.image.load("Forest/Layers/middle.png").convert_alph
 
 background_surface1 = pygame.transform.scale(background_surface1, (432, 720))
 background_surface2 = pygame.transform.scale(background_surface2, (528, 720))
+background_surface3 = pygame.transform.scale(background_surface3, (480, 720))
 
 ground_surface = pygame.image.load("tileset/ground2.png").convert()
 ground_surface = pygame.transform.scale(ground_surface, (128,128))
@@ -71,7 +97,7 @@ slash_frame = 0
 player_gravity = 0
 
 run = True
-game_active = True
+game_active = False
 
 while run:
     clock.tick(60)
@@ -81,20 +107,23 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-
         if not game_active:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 snake_rect.left = 1100
                 player_rect.bottom = 560
-                player_rect.x = 150 
+                player_rect.x = 0
+                start_time = current_time
                 game_active = True
+                
 
     #----------------------------Background----------------------------#
     if game_active:
+        score = display_score()
+
         for i in range(0,bg_tiles) : 
             screen.blit(background_surface1, (i * bg_width + bg_scroll, 0))  #layer1 scroll
             screen.blit(background_surface2, (i * bg_width + bg_scroll, 0))  #layer2 scroll
-            screen.blit(background_surface2, (i * bg_width + bg_scroll, 0))  #layer3 scroll
+            screen.blit(background_surface3, (i * bg_width + bg_scroll, 0))  #layer3 scroll
             
         bg_scroll -= 3  #background scrolling magnitude
         if abs(bg_scroll) > bg_width : bg_scroll = 0  #background loop
@@ -156,10 +185,9 @@ while run:
             game_active = False
 
     else:
-        screen.fill("Yellow")
-
+        if(score == 0):
+            game_start()
+        else:
+            game_over()
 
     pygame.display.update()
-
-pygame.QUIT()
-
