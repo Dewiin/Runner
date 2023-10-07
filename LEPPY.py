@@ -33,9 +33,6 @@ player_slash_2 = pygame.image.load("swoosh/slash1.png").convert_alpha()
 player_slash_3 = pygame.image.load("swoosh/slash2.png").convert_alpha()
 player_slash_4 = pygame.image.load("swoosh/slash3.png").convert_alpha()
 player_slash = [player_slash_1, player_slash_2, player_slash_3, player_slash_4]
-for slash in range(len(player_slash)) :
-    player_slash[slash] = pygame.transform.scale(player_slash[slash], (96,96))
-    slash_rect = player_slash[slash].get_rect(topleft = (player_rect.x, player_rect.y))
 
 bg_width = background_surface1.get_width()
 ground_width = ground_surface.get_width()
@@ -48,7 +45,8 @@ ground_scroll = 0
 
 last_update = pygame.time.get_ticks()
 animation_cooldown = 200
-frame = 0
+walk_frame = 0
+slash_frame = 0
 
 player_gravity = 0
 
@@ -57,17 +55,6 @@ while run:
     clock.tick(60)
     current_time = pygame.time.get_ticks()
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and player_rect.bottom >= 560:  
-                player_gravity = -20
-            if event.key == pygame.K_j :
-                for sl in range(len(player_slash)) :
-                    screen.blit(player_slash[sl], slash_rect)
-
-        
 
     #----------------------------Background----------------------------#
 
@@ -88,15 +75,37 @@ while run:
     #-----------------------------Animation-----------------------------#
 
     if current_time - last_update >= animation_cooldown:  #calculating ms difference
-        frame += 1
+        walk_frame += 1
         last_update = current_time
-        if(frame == 4) : frame = 0  #animation loop
+        if(walk_frame == 4) : walk_frame = 0  #animation loop
 
-    screen.blit(player_walk[frame], player_rect)  #iterating through list of animation images
-    screen.blit(player_slash[frame], slash_rect)
+    screen.blit(player_walk[walk_frame], player_rect)  #iterating through list of animation images
+    #screen.blit(player_slash[frame], slash_rect)
 
     #------------------------------Gameplay------------------------------#
 
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and player_rect.bottom >= 560:  
+                player_gravity = -20
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_a]:
+        player_rect.x -= 5
+    if keys[pygame.K_d]:
+        player_rect.x += 5
+    if keys[pygame.K_j]:
+        screen.blit(player_slash[slash_frame], slash_rect)
+        slash_frame += 1
+        if(slash_frame == 4): slash_frame = 0
+
+    for slash in range(len(player_slash)) :
+        player_slash[slash] = pygame.transform.scale(player_slash[slash], (96,96))
+        slash_rect = player_slash[slash].get_rect(topleft = (player_rect.x + 30, player_rect.y))
+            
+                    
 
     #--------------------------------------------------------------------#
 
