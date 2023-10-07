@@ -44,7 +44,9 @@ bg_scroll = 0
 ground_scroll = 0
 
 last_update = pygame.time.get_ticks()
+last_slash_update = pygame.time.get_ticks()
 animation_cooldown = 200
+slash_cooldown = 1000
 walk_frame = 0
 slash_frame = 0
 
@@ -54,6 +56,7 @@ run = True
 while run:
     clock.tick(60)
     current_time = pygame.time.get_ticks()
+    current_slash_time = pygame.time.get_ticks()
 
 
     #----------------------------Background----------------------------#
@@ -87,19 +90,17 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and player_rect.bottom >= 560:  
-                player_gravity = -20
-
+        
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_a]:
-        player_rect.x -= 5
-    if keys[pygame.K_d]:
-        player_rect.x += 5
-    if keys[pygame.K_j]:
-        screen.blit(player_slash[slash_frame], slash_rect)
-        slash_frame += 1
-        if(slash_frame == 4): slash_frame = 0
+    if(current_slash_time - last_slash_update >= slash_cooldown):
+        if keys[pygame.K_j]:
+            screen.blit(player_slash[slash_frame], slash_rect)
+            slash_frame += 1
+            if(slash_frame == 4): 
+                slash_frame = 0
+                last_slash_update = current_slash_time
+    if keys[pygame.K_SPACE] and player_rect.bottom >= 560:
+        player_gravity = -22
 
     for slash in range(len(player_slash)) :
         player_slash[slash] = pygame.transform.scale(player_slash[slash], (96,96))
