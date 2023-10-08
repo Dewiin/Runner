@@ -42,12 +42,55 @@ class Player(pygame.sprite.Sprite):
         self.apply_gravity()
         self.animation_state()
 
-"""
 class Obstacle(pygame.sprite.Sprite):
-    def __init__(self):
-        super()__init__()
-"""
+    def __init__(self, type):
+        super().__init__()
 
+        if type == "vulture":
+            vulture_walk_1 = pygame.image.load("Vulture_walk/vulture0.png").convert_alpha()
+            vulture_walk_2 = pygame.image.load("Vulture_walk/vulture1.png").convert_alpha()
+            vulture_walk_3 = pygame.image.load("Vulture_walk/vulture2.png").convert_alpha()
+            vulture_walk_4 = pygame.image.load("Vulture_walk/vulture3.png").convert_alpha()
+            self.frames = [vulture_walk_1, vulture_walk_2, vulture_walk_3, vulture_walk_4]
+            y_pos = 450
+
+        elif type == "snake":
+            snake_walk_1 = pygame.image.load("Snake_walk/snake0.png").convert_alpha()
+            snake_walk_2 = pygame.image.load("Snake_walk/snake1.png").convert_alpha()
+            snake_walk_3 = pygame.image.load("Snake_walk/snake2.png").convert_alpha()
+            snake_walk_4 = pygame.image.load("Snake_walk/snake3.png").convert_alpha()
+            self.frames = [snake_walk_1, snake_walk_2, snake_walk_3, snake_walk_4]
+            y_pos = 500
+
+        elif type == "hyena":
+            hyena_walk_1 = pygame.image.load("Hyena_walk/hyena0.png").convert_alpha()
+            hyena_walk_2 = pygame.image.load("Hyena_walk/hyena1.png").convert_alpha()
+            hyena_walk_3 = pygame.image.load("Hyena_walk/hyena2.png").convert_alpha()
+            hyena_walk_4 = pygame.image.load("Hyena_walk/hyena3.png").convert_alpha()
+            hyena_walk_5 = pygame.image.load("Hyena_walk/hyena4.png").convert_alpha()
+            hyena_walk_6 = pygame.image.load("Hyena_walk/hyena5.png").convert_alpha()
+            self.frames = [hyena_walk_1, hyena_walk_2, hyena_walk_3, hyena_walk_4, hyena_walk_5, hyena_walk_6]
+            y_pos = 500
+        
+        elif type == "scorpion":
+            scorpion_walk_1 = pygame.image.load("Scorpio_walk/scorpion0.png").convert_alpha()
+            scorpion_walk_2 = pygame.image.load("Scorpio_walk/scorpion1.png").convert_alpha()
+            scorpion_walk_3 = pygame.image.load("Scorpio_walk/scorpion2.png").convert_alpha()
+            scorpion_walk_4 = pygame.image.load("Scorpio_walk/scorpion3.png").convert_alpha()
+            self.frames = [scorpion_walk_1, scorpion_walk_2, scorpion_walk_3, scorpion_walk_4]
+            y_pos = 500
+
+        self.animation_index = 0
+        self.image = self.frames[self.animation_index]
+        self.rect = self.image.get_rect(midbottom = (SCREEN_WIDTH, y_pos))
+    
+    def animation_state(self):
+        self.animation_index += 0.1
+        if(self.animation_index >= len(self.frames)): self.animation_index = 0
+        self.image = self.frames[int(self.animation_index)]
+
+    def update(self):
+        self.animation_state()
 
 def display_score():
     current_time = int(pygame.time.get_ticks()/500) - int(start_time/500)
@@ -84,17 +127,16 @@ clock = pygame.time.Clock()
 start_time = 0
 score = 0
 
+#Groups
 player = pygame.sprite.GroupSingle()
 player.add(Player())
+
+obstacle_group = pygame.sprite.Group()
 
 score_font = pygame.font.Font("Fonts/BungeeSpice.ttf", 50)
 title_font = pygame.font.Font("Fonts/BungeeSpice.ttf", 100)
 
 background_surface = pygame.image.load("Forest/layered_forest0.png").convert_alpha()
-
-ground_surface = pygame.image.load("tileset/ground2.png").convert()
-ground_surface = pygame.transform.scale(ground_surface, (128,128))
-ground_rect = ground_surface.get_rect(bottomleft = (0, SCREEN_HEIGHT))
 
 """
 player_slash_1 = pygame.image.load("swoosh/slash0.png").convert_alpha()
@@ -104,11 +146,10 @@ player_slash_4 = pygame.image.load("swoosh/slash3.png").convert_alpha()
 player_slash = [player_slash_1, player_slash_2, player_slash_3, player_slash_4]
 """
 
-snake_walk_1 = pygame.image.load("Snake_walk/snake0.png").convert_alpha()
-snake_walk_2 = pygame.image.load("Snake_walk/snake1.png").convert_alpha()
-snake_walk_3 = pygame.image.load("Snake_walk/snake2.png").convert_alpha()
-snake_walk_4 = pygame.image.load("Snake_walk/snake3.png").convert_alpha()
-snake_walk = [snake_walk_1, snake_walk_2, snake_walk_3, snake_walk_4]
+ground_surface = pygame.image.load("tileset/ground2.png").convert()
+ground_surface = pygame.transform.scale(ground_surface, (128,128))
+ground_rect = ground_surface.get_rect(bottomleft = (0, SCREEN_HEIGHT))
+
 for sn in range (len(snake_walk)): 
     snake_walk[sn] = pygame.transform.scale(snake_walk[sn], (144,144))
     snake_rect = snake_walk[sn].get_rect(bottomleft = (SCREEN_WIDTH, 540))
