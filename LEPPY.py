@@ -1,6 +1,54 @@
 import pygame
 import math
 
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        player_walk_1 = pygame.image.load("characters/walking1.png").convert_alpha()
+        player_walk_2 = pygame.image.load("characters/walking2.png").convert_alpha()
+        player_walk_3 = pygame.image.load("characters/walking3.png").convert_alpha()
+        player_walk_4 = pygame.image.load("characters/walking4.png").convert_alpha()
+        self.player_walk = [player_walk_1, player_walk_2, player_walk_3, player_walk_4]
+        self.walk_frame = 0
+
+        self.image = self.player_walk[self.walk_frame]
+        self.rect = self.image.get_rect(midbottom = (200, 500))
+        self.gravity = 0
+    
+    def player_input(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE] and self.rect.bottom >= 500:
+            self.gravity = -22
+        if keys[pygame.K_a]:
+            self.rect.x -= 6
+            if self.rect.x < 0: self.rect.x = 0
+        if keys[pygame.K_d]:
+            self.rect.x += 6
+            if self.rect.right >= SCREEN_WIDTH-50: self.rect.right = SCREEN_WIDTH-50
+        
+    def apply_gravity(self):
+        self.gravity += 1
+        self.rect.y += self.gravity
+        if self.rect.bottom >= 500: self.rect.bottom = 500
+
+    def animation_state(self):
+        self.walk_frame += 0.1
+        if self.walk_frame >= len(self.player_walk): self.walk_frame = 0
+        self.image = self.player_walk[int(self.walk_frame)]
+        self.image = pygame.transform.scale(self.image, (96,96))
+
+    def update(self):
+        self.player_input()
+        self.apply_gravity()
+        self.animation_state()
+
+"""
+class Obstacle(pygame.sprite.Sprite):
+    def __init__(self):
+        super()__init__()
+"""
+
+
 def display_score():
     current_time = int(pygame.time.get_ticks()/500) - int(start_time/500)
     score_surface = score_font.render(f'{current_time}', False, "Orange")
@@ -24,9 +72,7 @@ def game_over():
 def game_start():
     title_surface = title_font.render("LEPPY", False, "Orange")
     title_rect = title_surface.get_rect(center = (SCREEN_WIDTH/2, 100))
-    for i in range(0, bg_tiles):
-        screen.blit(background_surface1, (i * bg_width,0))
-        screen.blit(background_surface2, (i * bg_width,0))
+    screen.fill("Black")
     screen.blit(title_surface, title_rect)
 
 SCREEN_WIDTH = 1000
@@ -38,35 +84,25 @@ clock = pygame.time.Clock()
 start_time = 0
 score = 0
 
+player = pygame.sprite.GroupSingle()
+player.add(Player())
+
 score_font = pygame.font.Font("Fonts/BungeeSpice.ttf", 50)
 title_font = pygame.font.Font("Fonts/BungeeSpice.ttf", 100)
 
-background_surface1 = pygame.image.load("Forest/Layers/back.png").convert_alpha()
-background_surface2 = pygame.image.load("Forest/Layers/far.png").convert_alpha()
-background_surface3 = pygame.image.load("Forest/Layers/middle.png").convert_alpha()
-
-background_surface1 = pygame.transform.scale(background_surface1, (432, 720))
-background_surface2 = pygame.transform.scale(background_surface2, (528, 720))
-background_surface3 = pygame.transform.scale(background_surface3, (480, 720))
+background_surface = pygame.image.load("Forest/layered_forest0.png").convert_alpha()
 
 ground_surface = pygame.image.load("tileset/ground2.png").convert()
 ground_surface = pygame.transform.scale(ground_surface, (128,128))
 ground_rect = ground_surface.get_rect(bottomleft = (0, SCREEN_HEIGHT))
 
-player_walk_1 = pygame.image.load("characters/walking1.png").convert_alpha()
-player_walk_2 = pygame.image.load("characters/walking2.png").convert_alpha()
-player_walk_3 = pygame.image.load("characters/walking3.png").convert_alpha()
-player_walk_4 = pygame.image.load("characters/walking4.png").convert_alpha()
-player_walk = [player_walk_1, player_walk_2, player_walk_3, player_walk_4]
-for scale in range(len(player_walk)) :
-    player_walk[scale] = pygame.transform.scale(player_walk[scale], (96,96))
-    player_rect = player_walk[scale].get_rect(midbottom = (150, 560))
-
+"""
 player_slash_1 = pygame.image.load("swoosh/slash0.png").convert_alpha()
 player_slash_2 = pygame.image.load("swoosh/slash1.png").convert_alpha()
 player_slash_3 = pygame.image.load("swoosh/slash2.png").convert_alpha()
 player_slash_4 = pygame.image.load("swoosh/slash3.png").convert_alpha()
 player_slash = [player_slash_1, player_slash_2, player_slash_3, player_slash_4]
+"""
 
 snake_walk_1 = pygame.image.load("Snake_walk/snake0.png").convert_alpha()
 snake_walk_2 = pygame.image.load("Snake_walk/snake1.png").convert_alpha()
@@ -78,7 +114,7 @@ for sn in range (len(snake_walk)):
     snake_rect = snake_walk[sn].get_rect(bottomleft = (SCREEN_WIDTH, 540))
                                          
 
-bg_width = background_surface1.get_width()
+bg_width = 432
 ground_width = ground_surface.get_width()
 
 bg_tiles = math.ceil(SCREEN_WIDTH / bg_width) + 1
@@ -87,14 +123,9 @@ ground_tiles = math.ceil(SCREEN_WIDTH / ground_width) + 1
 bg_scroll = 0
 ground_scroll = 0
 
-last_update = pygame.time.get_ticks()
 last_slash_update = pygame.time.get_ticks()
-animation_cooldown = 200
 slash_cooldown = 1000
-walk_frame = 0
 slash_frame = 0
-
-player_gravity = 0
 
 run = True
 game_active = False
@@ -110,8 +141,7 @@ while run:
         if not game_active:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 snake_rect.left = 1100
-                player_rect.bottom = 560
-                player_rect.x = 0
+                #player_rect = 0
                 start_time = current_time
                 game_active = True
                 
@@ -121,9 +151,7 @@ while run:
         score = display_score()
 
         for i in range(0,bg_tiles) : 
-            screen.blit(background_surface1, (i * bg_width + bg_scroll, 0))  #layer1 scroll
-            screen.blit(background_surface2, (i * bg_width + bg_scroll, 0))  #layer2 scroll
-            screen.blit(background_surface3, (i * bg_width + bg_scroll, 0))  #layer3 scroll
+            screen.blit(background_surface, (i * bg_width + bg_scroll, 0))  #tree background
             
         bg_scroll -= 3  #background scrolling magnitude
         if abs(bg_scroll) > bg_width : bg_scroll = 0  #background loop
@@ -138,51 +166,14 @@ while run:
 
         #-----------------------------Animation-----------------------------#
 
-        if current_time - last_update >= animation_cooldown:  #calculating ms difference
-            walk_frame += 1
-            last_update = current_time
-            if(walk_frame == 4) : walk_frame = 0  #animation loop
-
-        screen.blit(player_walk[walk_frame], player_rect)  #iterating through list of animation images
-        screen.blit(snake_walk[walk_frame], snake_rect)
-        snake_rect.x -= 7
-        if snake_rect.x < -500 : snake_rect.x = SCREEN_WIDTH
+        player.draw(screen)
+        player.update()
 
         #------------------------------Gameplay------------------------------#
-            
-        keys = pygame.key.get_pressed()
-        if(current_slash_time - last_slash_update >= slash_cooldown):
-            if keys[pygame.K_j]:
-                screen.blit(player_slash[slash_frame], slash_rect)
-                slash_frame += 1
-                if(slash_frame == 4): 
-                    slash_frame = 0
-                    last_slash_update = current_slash_time
-        if keys[pygame.K_SPACE] and player_rect.bottom >= 560:
-            player_gravity = -22
-        if keys[pygame.K_a]:
-            player_rect.x -= 6
-            if player_rect.x < 0: player_rect.x = 0
-        if keys[pygame.K_d]:
-            player_rect.x += 6
-            if player_rect.right > SCREEN_WIDTH: player_rect.right = SCREEN_WIDTH
-
-        for slash in range(len(player_slash)) :
-            player_slash[slash] = pygame.transform.scale(player_slash[slash], (96,96))
-            slash_rect = player_slash[slash].get_rect(topleft = (player_rect.x + 30, player_rect.y))
                 
-                        
+                
 
         #--------------------------------------------------------------------#
-
-        #---------Gravity--------#
-        player_gravity += 1
-        player_rect.y += player_gravity
-        if player_rect.bottom >= 560 : player_rect.bottom = 560
-
-        #collision
-        if(player_rect.colliderect(snake_rect)):
-            game_active = False
 
     else:
         if(score == 0):
