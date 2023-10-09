@@ -1,5 +1,6 @@
 import pygame
 import math
+from random import randint, choice
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -60,7 +61,7 @@ class Obstacle(pygame.sprite.Sprite):
             snake_walk_3 = pygame.image.load("Snake_walk/snake2.png").convert_alpha()
             snake_walk_4 = pygame.image.load("Snake_walk/snake3.png").convert_alpha()
             self.frames = [snake_walk_1, snake_walk_2, snake_walk_3, snake_walk_4]
-            y_pos = 500
+            y_pos = 550
 
         elif type == "hyena":
             hyena_walk_1 = pygame.image.load("Hyena_walk/hyena0.png").convert_alpha()
@@ -70,7 +71,7 @@ class Obstacle(pygame.sprite.Sprite):
             hyena_walk_5 = pygame.image.load("Hyena_walk/hyena4.png").convert_alpha()
             hyena_walk_6 = pygame.image.load("Hyena_walk/hyena5.png").convert_alpha()
             self.frames = [hyena_walk_1, hyena_walk_2, hyena_walk_3, hyena_walk_4, hyena_walk_5, hyena_walk_6]
-            y_pos = 500
+            y_pos = 550
         
         elif type == "scorpion":
             scorpion_walk_1 = pygame.image.load("Scorpio_walk/scorpion0.png").convert_alpha()
@@ -78,11 +79,11 @@ class Obstacle(pygame.sprite.Sprite):
             scorpion_walk_3 = pygame.image.load("Scorpio_walk/scorpion2.png").convert_alpha()
             scorpion_walk_4 = pygame.image.load("Scorpio_walk/scorpion3.png").convert_alpha()
             self.frames = [scorpion_walk_1, scorpion_walk_2, scorpion_walk_3, scorpion_walk_4]
-            y_pos = 500
+            y_pos = 550
 
         self.animation_index = 0
         self.image = self.frames[self.animation_index]
-        self.rect = self.image.get_rect(midbottom = (SCREEN_WIDTH, y_pos))
+        self.rect = self.image.get_rect(midbottom = (randint(SCREEN_WIDTH, 1500), y_pos))
     
     def animation_state(self):
         self.animation_index += 0.1
@@ -91,6 +92,11 @@ class Obstacle(pygame.sprite.Sprite):
 
     def update(self):
         self.animation_state()
+        self.rect.x -= 7
+        self.destroy()
+    
+    def destroy(self):
+        if self.rect.x < -100: self.kill()
 
 def display_score():
     current_time = int(pygame.time.get_ticks()/500) - int(start_time/500)
@@ -149,10 +155,6 @@ player_slash = [player_slash_1, player_slash_2, player_slash_3, player_slash_4]
 ground_surface = pygame.image.load("tileset/ground2.png").convert()
 ground_surface = pygame.transform.scale(ground_surface, (128,128))
 ground_rect = ground_surface.get_rect(bottomleft = (0, SCREEN_HEIGHT))
-
-for sn in range (len(snake_walk)): 
-    snake_walk[sn] = pygame.transform.scale(snake_walk[sn], (144,144))
-    snake_rect = snake_walk[sn].get_rect(bottomleft = (SCREEN_WIDTH, 540))
                                          
 
 bg_width = 432
@@ -171,17 +173,22 @@ slash_frame = 0
 run = True
 game_active = False
 
+obstacle_timer = pygame.USEREVENT + 1
+pygame.time.set_timer(obstacle_timer, 1800)
+
 while run:
     clock.tick(60)
     current_time = pygame.time.get_ticks()
     current_slash_time = pygame.time.get_ticks()
 
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        if not game_active:
+        if event.type == pygame.QUIT: run = False
+        if game_active:
+            if event.type == obstacle_timer:
+                obstacle_group.add(Obstacle(choice(["snake", "scorpion", "hyena", "vulture"])))
+        else:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                snake_rect.left = 1100
+                #snake_rect.left = 1100
                 #player_rect = 0
                 start_time = current_time
                 game_active = True
@@ -209,6 +216,9 @@ while run:
 
         player.draw(screen)
         player.update()
+
+        obstacle_group.draw(screen)
+        obstacle_group.update()
 
         #------------------------------Gameplay------------------------------#
                 
