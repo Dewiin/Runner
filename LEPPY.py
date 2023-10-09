@@ -2,6 +2,37 @@ import pygame
 import math
 from random import randint, choice
 
+class Slash(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        player_empty_0 = pygame.image.load("empty0.png").convert_alpha()
+        player_slash_1 = pygame.image.load("swoosh/slash0.png").convert_alpha()
+        player_slash_2 = pygame.image.load("swoosh/slash1.png").convert_alpha()
+        player_slash_3 = pygame.image.load("swoosh/slash2.png").convert_alpha()
+        player_slash_4 = pygame.image.load("swoosh/slash3.png").convert_alpha()
+        self.player_slash = [player_empty_0, player_slash_1, player_slash_2, player_slash_3, player_slash_4]
+        self.slash_frame = 0
+
+        self.image = self.player_slash[self.slash_frame]
+        self.rect = player.sprite.rect
+
+    def player_input(self):
+        keys = pygame.key.get_pressed()
+        
+        if keys[pygame.K_j]:
+            self.slash_frame += 0.2
+            if self.slash_frame >= len(self.player_slash): self.slash_frame = 0
+            self.image = self.player_slash[int(self.slash_frame)]
+
+        
+    def animation_state(self):
+        self.rect = player.sprite.rect
+        self.image = pygame.transform.scale(self.image, (96,96))
+
+    def update(self):
+        self.player_input()
+        self.animation_state()
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -15,10 +46,13 @@ class Player(pygame.sprite.Sprite):
         self.image = self.player_walk[self.walk_frame]
         self.rect = self.image.get_rect(midbottom = (200, 500))
         self.gravity = 0
+        self.jump_sound = pygame.mixer.Sound("jump_11.wav")
+        self.jump_sound.set_volume(0.2)
     
     def player_input(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE] and self.rect.bottom >= 500:
+            self.jump_sound.play()
             self.gravity = -22
         if keys[pygame.K_a]:
             self.rect.x -= 6
@@ -72,6 +106,14 @@ class Obstacle(pygame.sprite.Sprite):
             hyena_walk_6 = pygame.image.load("Hyena_walk/hyena5.png").convert_alpha()
             self.frames = [hyena_walk_1, hyena_walk_2, hyena_walk_3, hyena_walk_4, hyena_walk_5, hyena_walk_6]
             y_pos = 550
+
+            hyena_death_1 = pygame.image.load("Hyena_death/hyena_death0.png").convert_alpha()
+            hyena_death_2 = pygame.image.load("Hyena_death/hyena_death1.png").convert_alpha()
+            hyena_death_3 = pygame.image.load("Hyena_death/hyena_death2.png").convert_alpha()
+            hyena_death_4 = pygame.image.load("Hyena_death/hyena_death3.png").convert_alpha()
+            hyena_death_5 = pygame.image.load("Hyena_death/hyena_death4.png").convert_alpha()
+            hyena_death_6 = pygame.image.load("Hyena_death/hyena_death5.png").convert_alpha()
+            self.death = [hyena_death_1, hyena_death_2, hyena_death_3, hyena_death_4, hyena_death_5, hyena_death_6]
         
         elif type == "scorpion":
             scorpion_walk_1 = pygame.image.load("Scorpio_walk/scorpion0.png").convert_alpha()
@@ -82,6 +124,7 @@ class Obstacle(pygame.sprite.Sprite):
             y_pos = 550
 
         self.animation_index = 0
+        self.death_index = 0
         self.image = self.frames[self.animation_index]
         self.rect = self.image.get_rect(midbottom = (randint(SCREEN_WIDTH, 1500), y_pos))
     
@@ -96,6 +139,8 @@ class Obstacle(pygame.sprite.Sprite):
         self.destroy()
     
     def destroy(self):
+        if pygame.sprite.spritecollide(slash.sprite, obstacle_group, False):
+            for i in range(len(self.death)): self.image = self.death[i]
         if self.rect.x < -100: self.kill()
 
 def display_score():
@@ -124,6 +169,15 @@ def game_start():
     screen.fill("Black")
     screen.blit(title_surface, title_rect)
 
+def collision_sprite():
+    if pygame.sprite.spritecollide(player.sprite, obstacle_group, False):
+        death_music.play()
+        obstacle_group.empty()
+        player.sprite.rect.midbottom = (200,500)
+        return False
+    else:
+        return True
+
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 650
 pygame.init()
@@ -133,30 +187,31 @@ clock = pygame.time.Clock()
 start_time = 0
 score = 0
 
+#Music
+intro_music = pygame.mixer.Sound("gamestart.mp3")
+death_music = pygame.mixer.Sound("Death.mp3")
+bg_music = pygame.mixer.Sound("gamemusic.mp3")
+bg_music.set_volume(0.15)
+if score == 0: intro_music.play()
+
 #Groups
 player = pygame.sprite.GroupSingle()
 player.add(Player())
 
 obstacle_group = pygame.sprite.Group()
 
+slash = pygame.sprite.GroupSingle()
+slash.add(Slash())
+
 score_font = pygame.font.Font("Fonts/BungeeSpice.ttf", 50)
 title_font = pygame.font.Font("Fonts/BungeeSpice.ttf", 100)
 
 background_surface = pygame.image.load("Forest/layered_forest0.png").convert_alpha()
 
-"""
-player_slash_1 = pygame.image.load("swoosh/slash0.png").convert_alpha()
-player_slash_2 = pygame.image.load("swoosh/slash1.png").convert_alpha()
-player_slash_3 = pygame.image.load("swoosh/slash2.png").convert_alpha()
-player_slash_4 = pygame.image.load("swoosh/slash3.png").convert_alpha()
-player_slash = [player_slash_1, player_slash_2, player_slash_3, player_slash_4]
-"""
-
 ground_surface = pygame.image.load("tileset/ground2.png").convert()
 ground_surface = pygame.transform.scale(ground_surface, (128,128))
 ground_rect = ground_surface.get_rect(bottomleft = (0, SCREEN_HEIGHT))
-                                         
-
+  
 bg_width = 432
 ground_width = ground_surface.get_width()
 
@@ -166,20 +221,16 @@ ground_tiles = math.ceil(SCREEN_WIDTH / ground_width) + 1
 bg_scroll = 0
 ground_scroll = 0
 
-last_slash_update = pygame.time.get_ticks()
-slash_cooldown = 1000
-slash_frame = 0
-
 run = True
 game_active = False
 
 obstacle_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(obstacle_timer, 1800)
 
+bg_music.play(-1)
 while run:
     clock.tick(60)
     current_time = pygame.time.get_ticks()
-    current_slash_time = pygame.time.get_ticks()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT: run = False
@@ -188,14 +239,14 @@ while run:
                 obstacle_group.add(Obstacle(choice(["snake", "scorpion", "hyena", "vulture"])))
         else:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                #snake_rect.left = 1100
-                #player_rect = 0
                 start_time = current_time
                 game_active = True
                 
 
     #----------------------------Background----------------------------#
     if game_active:
+        death_music.stop()
+
         score = display_score()
 
         for i in range(0,bg_tiles) : 
@@ -211,20 +262,19 @@ while run:
         if abs(ground_scroll) > ground_width : ground_scroll = 0  #ground loop
 
         display_score()
+        game_active = collision_sprite()
 
         #-----------------------------Animation-----------------------------#
 
         player.draw(screen)
         player.update()
+        slash.draw(screen)
+        slash.update()
 
         obstacle_group.draw(screen)
         obstacle_group.update()
 
-        #------------------------------Gameplay------------------------------#
-                
-                
-
-        #--------------------------------------------------------------------#
+        #------------------------------Screens------------------------------#
 
     else:
         if(score == 0):
