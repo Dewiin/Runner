@@ -5,6 +5,7 @@ from random import randint, choice
 class Slash(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
+        self.is_animating = False
         player_empty_0 = pygame.image.load("empty0.png").convert_alpha()
         player_slash_1 = pygame.image.load("swoosh/slash0.png").convert_alpha()
         player_slash_2 = pygame.image.load("swoosh/slash1.png").convert_alpha()
@@ -14,23 +15,22 @@ class Slash(pygame.sprite.Sprite):
         self.slash_frame = 0
 
         self.image = self.player_slash[self.slash_frame]
-        self.rect = player.sprite.rect
+        self.rect = self.image.get_rect(topright = (player.sprite.rect.x + 80, player.sprite.rect.y))
 
-    def player_input(self):
-        keys = pygame.key.get_pressed()
-        
-        if keys[pygame.K_j]:
-            self.slash_frame += 0.2
-            if self.slash_frame >= len(self.player_slash): self.slash_frame = 0
-            self.image = self.player_slash[int(self.slash_frame)]
-
+    def animate(self):
+        self.is_animating = True
         
     def animation_state(self):
-        self.rect = player.sprite.rect
+        self.rect = self.image.get_rect(topright = (player.sprite.rect.x + 80, player.sprite.rect.y))
         self.image = pygame.transform.scale(self.image, (96,96))
 
     def update(self):
-        self.player_input()
+        if(self.is_animating):
+            self.slash_frame += 0.2
+            if(self.slash_frame >= len(self.player_slash)):
+                self.is_animating = False
+                self.slash_frame = 0
+            self.image = self.player_slash[int(self.slash_frame)]
         self.animation_state()
 
 class Player(pygame.sprite.Sprite):
@@ -71,6 +71,15 @@ class Player(pygame.sprite.Sprite):
         if self.walk_frame >= len(self.player_walk): self.walk_frame = 0
         self.image = self.player_walk[int(self.walk_frame)]
         self.image = pygame.transform.scale(self.image, (96,96))
+    
+    def collision_sprite(self):
+        if pygame.sprite.spritecollide(player.sprite, obstacle_group, False):
+            death_music.play()
+            obstacle_group.empty()
+            player.sprite.rect.midbottom = (200,500)
+            return False
+        else:
+            return True
 
     def update(self):
         self.player_input()
@@ -140,8 +149,10 @@ class Obstacle(pygame.sprite.Sprite):
     
     def destroy(self):
         if pygame.sprite.spritecollide(slash.sprite, obstacle_group, False):
-            for i in range(len(self.death)): self.image = self.death[i]
-        if self.rect.x < -100: self.kill()
+            global harmful
+            harmful = False
+            self.dying = True
+        if self.rect.x < -200: self.kill()
 
 def display_score():
     current_time = int(pygame.time.get_ticks()/500) - int(start_time/500)
@@ -168,15 +179,6 @@ def game_start():
     title_rect = title_surface.get_rect(center = (SCREEN_WIDTH/2, 100))
     screen.fill("Black")
     screen.blit(title_surface, title_rect)
-
-def collision_sprite():
-    if pygame.sprite.spritecollide(player.sprite, obstacle_group, False):
-        death_music.play()
-        obstacle_group.empty()
-        player.sprite.rect.midbottom = (200,500)
-        return False
-    else:
-        return True
 
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 650
@@ -236,7 +238,9 @@ while run:
         if event.type == pygame.QUIT: run = False
         if game_active:
             if event.type == obstacle_timer:
-                obstacle_group.add(Obstacle(choice(["snake", "scorpion", "hyena", "vulture"])))
+                obstacle_group.add(Obstacle(choice(["hyena", "snake", "vulture", "snake", "scorpion", "hyena"])))
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_j:
+                slash.sprite.animate()
         else:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 start_time = current_time
@@ -262,7 +266,7 @@ while run:
         if abs(ground_scroll) > ground_width : ground_scroll = 0  #ground loop
 
         display_score()
-        game_active = collision_sprite()
+        game_active = player.sprite.collision_sprite()
 
         #-----------------------------Animation-----------------------------#
 
